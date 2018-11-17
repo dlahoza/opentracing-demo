@@ -1,0 +1,39 @@
+version: '3'
+services:
+  jaeger:
+    image: "jaegertracing/all-in-one:1.8"
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  authority:
+    build: cmd/authority
+    links:
+     - jaeger
+    environment:
+     - JAEGER_AGENT_HOST=jaeger
+     - JAEGER_AGENT_PORT=6831
+  treasury:
+    build: cmd/treasury
+    links:
+      - jaeger
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+  frontend:
+    build: cmd/frontend
+    links:
+      - jaeger
+      - authority
+      - treasury
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+    ports:
+      - "8080:8080"
